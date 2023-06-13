@@ -1,0 +1,30 @@
+{
+    "name": "actions-minecraft-plugin-project-check",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/index.js",
+    "scripts": {
+        "dev": "ncc build src/index.js && nodemon dist/index.js",
+        "build": "ncc build src/index.js --minify"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/m7rlin/actions-minecraft-plugin-project-check.git"
+    },
+    "keywords": [],
+    "author": "Marcin m7rlin Stawowczyk",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/m7rlin/actions-minecraft-plugin-project-check/issues"
+    },
+    "homepage": "https://github.com/m7rlin/actions-minecraft-plugin-project-check#readme",
+    "dependencies": {
+        "@actions/core": "^1.10.0",
+        "@actions/github": "^5.1.1",
+        "semver-diff": "^4.0.0",
+        "xml2js": "^0.6.0"
+    },
+    "devDependencies": {
+        "@vercel/ncc": "^0.36.1"
+    }
+}
