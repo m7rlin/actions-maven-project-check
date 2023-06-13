@@ -1,24 +1,28 @@
-// imports
-const core = require('@actions/core');
-const github = require('@actions/github');
-const xml2js = require('xml2js');
-const fs = require('fs');
-const path = require('path');
-const semverDiff = require('semver-diff');
+import core from '@actions/core';
+import github from '@actions/github';
+import xml2js from 'xml2js';
+import fs from 'fs';
+import path from 'path';
+import semverDiff from 'semver-diff';
 
-// constants
+// Config
 const repositoryLocalWorkspace = process.env.GITHUB_WORKSPACE + '/';
 
-// helper functions
-function getProjectVersionFromMavenFile(fileContent) {
-    var parser = new xml2js.Parser();
-    var projectVersion;
+const parser = new xml2js.Parser();
 
-    parser.parseString(fileContent, function (err, result) {
-        projectVersion = String(result.project.version);
+// Helper functions
+
+function getProjectVersionFromMavenFile(fileContent) {
+    const project = {};
+
+    parser.parseString(fileContent, function (err) {
+        project.version = String(result.project.version);
+    });
+    parser.parseString(fileContent, function (err) {
+        project.minecraftVersion = String(result.project.version);
     });
 
-    return projectVersion;
+    return project;
 }
 
 function getProjectVersionFromPackageJsonFile(fileContent) {
@@ -27,7 +31,7 @@ function getProjectVersionFromPackageJsonFile(fileContent) {
 
 function getProjectVersion(fileContent, fileName) {
     if (fileName === 'pom.xml') {
-        return getProjectVersionFromMavenFile(fileContent);
+        return getProjectVersionFromMavenFile(fileContent).version;
     }
 
     if (fileName === 'package.json') {
@@ -72,21 +76,21 @@ function checkVersionUpdate(
     }
 }
 
-// main
+// Main
 async function run() {
     try {
-        // setup objects
+        // Setup objects
         var octokit = new github.getOctokit(core.getInput('token'));
 
-        // get repository owner and name
+        // Get repository owner and name
         var repository = process.env.GITHUB_REPOSITORY.split('/');
         var repositoryOwner = repository[0];
         var repositoryName = repository[1];
 
-        // get file with updated project version
+        // Get file with updated project version
         var fileToCheck = core.getInput('file-to-check');
 
-        // get additional files with updated project version
+        // Get additional files with updated project version
         var additionalFilesToCheck = core.getInput('additional-files-to-check');
         additionalFilesToCheck =
             additionalFilesToCheck != '' ? additionalFilesToCheck : undefined;
@@ -94,14 +98,14 @@ async function run() {
             additionalFilesToCheck = additionalFilesToCheck.split(',');
         }
 
-        // get target branch
+        // Get target branch
         var event = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH));
         var targetBranch =
             event && event.pull_request && event.pull_request.base
                 ? event.pull_request.base.ref
                 : 'master';
 
-        // get updated project version
+        // Get updated project version
         var updatedBranchFileContent = fs.readFileSync(
             repositoryLocalWorkspace + fileToCheck
         );
@@ -111,8 +115,8 @@ async function run() {
             fileName
         );
 
-        // check version update
-        if (core.getInput('only-return-version') == 'false') {
+        // Check version update
+        if (core.getInput('check-version-update') == 'true') {
             octokit.rest.repos
                 .getContent({
                     owner: repositoryOwner,
@@ -122,7 +126,7 @@ async function run() {
                     headers: { Accept: 'application/vnd.github.v3.raw' },
                 })
                 .then((response) => {
-                    // get target project version
+                    // Get target project version
                     var targetBranchFileContent = response.data;
                     var targetProjectVersion = getProjectVersion(
                         targetBranchFileContent,
@@ -145,18 +149,18 @@ async function run() {
                 );
         }
 
-        // set output
+        // Set outputs
         core.setOutput('version', updatedProjectVersion);
     } catch (error) {
         core.setFailed(error.message);
     }
 }
 
-// start the action
+// Start ACTION
 run();
 
-// exports for unit testing
-module.exports = {
+// Exports for unit testing
+export default {
     getProjectVersion,
     getProjectVersionFromMavenFile,
     getProjectVersionFromPackageJsonFile,
